@@ -34,8 +34,10 @@ const Service = () => {
             const response = await fetch(`${GetAllItems}`, requestOptions);
             if (response.ok) {
                 const workItems = await response.json();
-                const itemsWithQuantity = workItems.map(item => ({ ...item, quantity: 1 }));
-                setItems(itemsWithQuantity);
+                // const itemsWithQuantity = workItems.map(item => ({ ...item, quantity: 1 }));
+                const availableItems = workItems.filter(item => item.quantity > 0);
+                setItems(availableItems);
+                // setItems(itemsWithQuantity);
                 setLoading(false);
             } else if (response.status === 401) {
                 setLoading(false);
@@ -62,27 +64,27 @@ const Service = () => {
     const completeService = async () => {
         toast.dismiss();
         toast.loading("Completing service..");
-    
+
         const token = localStorage.getItem('token_sa');
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         myHeaders.append("Authorization", `Bearer ${token}`);
-    
+
         const requestBody = selectedItems.reduce((acc, item) => {
             acc[item.id.toString()] = item.quantity;
             return acc;
         }, {});
-    
+
         const requestOptions = {
             method: "POST",
             headers: myHeaders,
             body: JSON.stringify(requestBody),
             redirect: "follow",
         };
-    
+
         try {
             let response = await fetch(`${PostCompleteService}${vehicleNumber}`, requestOptions);
-    
+
             if (response.ok) {
                 toast.dismiss();
                 toast.success('Service completed successfully!');
@@ -101,7 +103,7 @@ const Service = () => {
             toast.error('Failed to complete service');
         }
     }
-    
+
 
     const handleCompleteService = (e) => {
         e.preventDefault();
@@ -113,34 +115,100 @@ const Service = () => {
         }
     }
 
-    const handleAddItem = (item) => {
-        const isItemAlreadySelected = selectedItems.some(selectedItem => selectedItem.id === item.id);
-    
-        if (!isItemAlreadySelected) {
-            const updatedSelectedItems = [...selectedItems, { ...item, quantity: 1 }];
-            setSelectedItems(updatedSelectedItems);
-        } else {
-            const updatedSelectedItems = selectedItems.map(selectedItem => {
-                if (selectedItem.id === item.id) {
-                    return { ...selectedItem, quantity: selectedItem.quantity + 1 };
-                }
-                return selectedItem;
-            });
-            setSelectedItems(updatedSelectedItems);
+    // const handleAddItem = (item) => {
+    //     const isItemAlreadySelected = selectedItems.some(selectedItem => selectedItem.id === item.id);
+
+    //     if (!isItemAlreadySelected) {
+    //         const updatedSelectedItems = [...selectedItems, { ...item, quantity: 1 }];
+    //         setSelectedItems(updatedSelectedItems);
+    //     } else {
+    //         const updatedSelectedItems = selectedItems.map(selectedItem => {
+    //             if (selectedItem.id === item.id) {
+    //                 return { ...selectedItem, quantity: selectedItem.quantity + 1 };
+    //             }
+    //             return selectedItem;
+    //         });
+    //         setSelectedItems(updatedSelectedItems);
+    //     }
+    // };
+
+
+const handleAddItem = (item) => {
+
+    const existingItem = selectedItems.find(
+        selectedItem => selectedItem.id === item.id
+    );
+
+    // first time add
+    if (!existingItem) {
+
+        const updatedSelectedItems = [
+            ...selectedItems,
+            { ...item, quantity: 1 }
+        ];
+
+        setSelectedItems(updatedSelectedItems);
+
+    } else {
+
+        // prevent exceeding stock
+        if (existingItem.quantity >= item.quantity) {
+            toast.error('No more stock available');
+            return;
         }
-    };
-    
+
+        const updatedSelectedItems = selectedItems.map(
+            selectedItem => {
+
+                if (selectedItem.id === item.id) {
+
+                    return {
+                        ...selectedItem,
+                        quantity: selectedItem.quantity + 1
+                    };
+                }
+
+                return selectedItem;
+            }
+        );
+
+        setSelectedItems(updatedSelectedItems);
+    }
+};
+
+
+
+
+    // const handleDeleteItem = (itemId) => {
+    //     const updatedSelectedItems = selectedItems.filter(item => item.id !== itemId);
+    //     setSelectedItems(updatedSelectedItems);
+    // };
 
     const handleDeleteItem = (itemId) => {
-        const updatedSelectedItems = selectedItems.filter(item => item.id !== itemId);
-        setSelectedItems(updatedSelectedItems);
-    };
+
+    const updatedSelectedItems = selectedItems
+        .map(item => {
+
+            if (item.id === itemId) {
+
+                return {
+                    ...item,
+                    quantity: item.quantity - 1
+                };
+            }
+
+            return item;
+        })
+        .filter(item => item.quantity > 0);
+
+    setSelectedItems(updatedSelectedItems);
+};
 
     const calculateTotalCost = () => {
         return selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
 
-    
+
 
     return (
         <Container fluid className="p-5">
@@ -174,7 +242,13 @@ const Service = () => {
                                         <td>{index + 1}</td>
                                         <td>{item.name}</td>
                                         <td>{item.price}</td>
-                                        <td>{selectedItems.find(i => i.id === item.id)?.quantity || 0}</td>
+                                        {/* <td>{item.quantity}</td>
+                                        <td>{selectedItems.find(i => i.id === item.id)?.quantity || 0}</td> */}
+
+                                        <td>
+                                            {selectedItems.find(i => i.id === item.id)?.quantity || 0}
+                                            / {item.quantity}
+                                        </td>
                                         <td>
                                             <Button
                                                 variant="success"

@@ -79,10 +79,16 @@ const VehicleCard = (props) => {
                 <Card.Text className="mb-3">
                     <strong>Model Number:</strong> {props.vehicleModel}
                 </Card.Text>
-                <Card.Text className="mb-3">
-                    <strong>Description:</strong> {descriptionExpanded ? props.vehicleDescription : `${props.vehicleDescription?.slice(0, 30)}...`}
-                    {!descriptionExpanded && props.vehicleDescription.length > 30 && <Button variant="link" size="sm" onClick={toggleDescription}>Read More</Button>}
-                </Card.Text>
+                                <Card.Text className="mb-3">
+                                        <strong>Description:</strong> {descriptionExpanded ? props.vehicleDescription : `${props.vehicleDescription?.slice(0, 30)}...`}
+                                        {!descriptionExpanded && props.vehicleDescription.length > 30 && <Button variant="link" size="sm" onClick={toggleDescription}>Read More</Button>}
+                                </Card.Text>
+
+                                { (props.scheduleDate || props.startTime || props.endTime) && (
+                                    <Card.Text className="mb-2 small text-muted">
+                                        <strong>Schedule:</strong> {props.scheduleDate ? props.scheduleDate : ''} {props.startTime ? props.startTime.slice(0,5) : ''}{props.endTime ? ` - ${props.endTime.slice(0,5)}` : ''}
+                                    </Card.Text>
+                                )}
                 <Card.Text className={`pb-1 small`}>
                     <span className='d-flex align-items-center pb-2 gap-1 border-bottom'><i className='fe fe-user'></i> {props.ownerFirstname} {props.ownerLastname}</span>
                     <span className='d-flex align-items-center pt-2 gap-1'><i className='fe fe-map-pin mr-2'></i>{props.ownerAddress}</span>
