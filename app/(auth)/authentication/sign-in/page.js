@@ -3,7 +3,7 @@
 
 import { Row, Col, Card, Form, Button, } from 'react-bootstrap';
 import Link from 'next/link';
-import useMounted from 'hooks/useMounted';
+import useMounted from '../../../../hooks/useMounted';
 import { useState } from 'react';
 import { SignInAdmin } from '../../../../constants/AuthConstants';
 import { useRouter } from 'next/navigation';
